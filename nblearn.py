@@ -1,7 +1,7 @@
 import os
 import sys
 import math
-
+import pickle
 spamDicts={}
 hamDicts={}
 spamCount=0
@@ -12,7 +12,6 @@ def readSpamFile(fileName):
         for line in f:
             for word in line.split(" "):
                 word=word.rstrip('\n').rstrip('\r')
-                #print(word)
                 if word in spamDicts:
                     spamDicts[word]=spamDicts[word]+1
                 else:
@@ -36,19 +35,28 @@ def generateModel(modelFileName):
     spamWordsCount=0
     hamWordsCount=0
     for key, value in spamDicts.items():
-        spamWordsCount+=int(value)
+        if len(key)!=0:
+            spamWordsCount+=int(value)
     for key, value in hamDicts.items():
-        hamWordsCount+=int(value)
+        if len(key)!=0:
+            hamWordsCount+=int(value)
     with open(modelFileName, "w",encoding="latin1") as modelFile:
-        modelFile.write(str((spamCount/(spamCount+hamCount)))+"\n")
-        modelFile.write(str((hamCount/ (spamCount + hamCount)))+"\n")
+        if spamCount==0:
+            modelFile.write("0.00\n")
+        else:
+            modelFile.write(str((spamCount / (spamCount + hamCount))) + "\n")
+        if hamCount==0:
+            modelFile.write("0.00\n")
+        else:
+            modelFile.write(str((hamCount / (spamCount + hamCount))) + "\n")
         modelFile.write(("SPAM")+"\n")
         for key, value in spamDicts.items():
-            modelFile.write(key + "=" + str(math.log10((value/spamWordsCount)))+"\n")
+            if len(key)!=0:
+                modelFile.write(key + " " + str(math.log10((value/spamWordsCount)))+"\n")
         modelFile.write(("HAM")+"\n")
         for key, value in hamDicts.items():
-            modelFile.write(key+ "=" +str(math.log10(((value / hamWordsCount))))+"\n")
-
+            if len(key)!=0:
+                modelFile.write(key+ " " +str(math.log10(((value / hamWordsCount))))+"\n")
 
 def listFiles(directoryPath):
     for root, dirs, files in os.walk(directoryPath):
