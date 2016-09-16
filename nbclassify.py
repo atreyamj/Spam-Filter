@@ -28,9 +28,9 @@ def buildModel(modelName):
                         isHam=1
                     else:
                         tokenIndex=0
-                        tokens=line.split("=")
-                        if(len(line.split("="))==1):
-                            if isSpam==1:
+                        tokens=line.split(" ")
+                        if(len(line.split(" "))==1):
+                            if isSpam==1: # Not Required
                                 spamDicts[" "]=float(line.lstrip("=").rstrip("\r").rstrip("\n"))
                             elif isHam==1:
                                 hamDicts[" "]=float(line.lstrip("=").rstrip("\r").rstrip("\n"))
@@ -41,6 +41,59 @@ def buildModel(modelName):
                                 hamDicts[str(tokens[tokenIndex])]=float(tokens[tokenIndex+1])
                 lineCount+=1
 
+def getSpamProbability(word):
+    global spamDicts
+    if word in spamDicts:
+        return spamDicts[word]
+    return 0
+
+def getHamProbability(word):
+    global hamDicts
+    if word in hamDicts:
+        return hamDicts[word]
+    return 0
+
+def doClassifyDocument(fileName):
+    spamProbab=0
+    hamProbab=0
+    global spamProb,hamProb
+    with open(fileName, 'r',encoding= "latin1") as f:
+        for line in f:
+            for word in line.split(" "):
+                word=word.rstrip('\n').rstrip('\r')
+                spamProbab+=getSpamProbability(word)
+                hamProbab+=getHamProbability(word)
+        spamProbab+=spamProb
+        hamProbab+=hamProb
+        if spamProbab > hamProbab:
+            return 0
+        elif spamProbab < hamProbab:
+            return 1
+        else:
+            return 2
+
+def getClassification(directoryPath):
+    for root, dirs, files in os.walk(directoryPath):
+        path = root.split('/')
+        for file in files:
+            if file.endswith(".txt"):
+                classifcationValue=doClassifyDocument(os.path.join(root,file))
+                if classifcationValue ==0:
+                    print(file + " - SPAM")
+                elif classifcationValue ==1:
+                    print(file + " - HAM")
+                else:
+                    print(file + " - Can't Classify")
+
+if  len(sys.argv) != 2:
+    print("Error: The input data path is NULL or empty\n")
+    sys.exit(-1)
+
+if  not sys.argv[1]:
+    print("Error: The input data path is NULL or empty\n")
+    sys.exit(-1)
+
 buildModel("nbmodel.txt")
-print(spamDicts["Subject:"])
+getClassification(sys.argv[1])
+
 sys.exit(0)
