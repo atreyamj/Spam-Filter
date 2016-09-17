@@ -1,62 +1,77 @@
 import os
 import sys
-import math
-import pickle
+import json
 spamDicts={}
 hamDicts={}
-spamCount=0
-hamCount=0
+EnglishStopWords = {'ourselves', 'hers', 'between', 'yourself', 'but', 'again', 'there', 'about', 'once', 'during', 'out',
+                    'very', 'having', 'with', 'they', 'own', 'an', 'be', 'some', 'for', 'do', 'its', 'yours', 'such', 'into',
+                    'of', 'most', 'itself', 'other', 'off', 'is', 's', 'am', 'or', 'who', 'as', 'from', 'him', 'each', 'the',
+                    'themselves', 'until', 'below', 'are', 'we', 'these', 'your', 'his', 'through', 'don', 'nor', 'me', 'were',
+                    'her', 'more', 'himself', 'this', 'down', 'should', 'our', 'their', 'while', 'above', 'both', 'up', 'to', 'ours',
+                    'had', 'she', 'all', 'no', 'when', 'at', 'any', 'before', 'them', 'same', 'and', 'been', 'have', 'in', 'will',
+                    'on', 'does', 'yourselves', 'then', 'that', 'because', 'what', 'over', 'why', 'so', 'can', 'did', 'not', 'now',
+                    'under', 'he', 'you', 'herself', 'has', 'just', 'where', 'too', 'only', 'myself', 'which', 'those', 'i', 'after',
+                    'few', 'whom', 't', 'being', 'if', 'theirs', 'my', 'against', 'a', 'by', 'doing', 'it', 'how', 'further', 'was', 'here', 'than'}
+spamFileCount=0
+hamFileCount=0
 def readSpamFile(fileName):
-    global spamDicts,spamCount
+    global spamDicts,spamFileCount
     with open(fileName, 'r',encoding= "latin1") as f:
         for line in f:
             for word in line.split(" "):
                 word=word.rstrip('\n').rstrip('\r')
-                if word in spamDicts:
-                    spamDicts[word]=spamDicts[word]+1
-                else:
-                    spamDicts[word] = 1
-    spamCount+=1
+                if (word not in EnglishStopWords) and (word.isnumeric() is False):
+                    if (word in spamDicts):
+                        spamDicts[word]=spamDicts[word]+1
+                    else:
+                        spamDicts[word] = 1
+    spamFileCount+=1
 
 def readHamFile(fileName):
-    global hamDicts,hamCount
+    global hamDicts,hamFileCount
     with open(fileName, 'r',encoding= "latin1") as f:
         for line in f:
             for word in line.split(" "):
                 word=word.rstrip('\n').rstrip('\r')
-                if word in hamDicts:
-                    hamDicts[word]=hamDicts[word]+1
-                else:
-                    hamDicts[word] = 1
-    hamCount+=1
+                if (word not in EnglishStopWords) and (word.isnumeric() is False):
+                    if word in hamDicts:
+                        hamDicts[word]=hamDicts[word]+1
+                    else:
+                        hamDicts[word] = 1
+    hamFileCount+=1
 
 def generateModel(modelFileName):
-    global spamDicts,hamDicts,spamCount,hamCount
+    global spamDicts,hamDicts,spamFileCount,hamFileCount
     spamWordsCount=0
     hamWordsCount=0
+    jsonData={}
+    uniqueDict={}
     for key, value in spamDicts.items():
         if len(key)!=0:
             spamWordsCount+=int(value)
+            uniqueDict[key]=0
     for key, value in hamDicts.items():
         if len(key)!=0:
             hamWordsCount+=int(value)
-    with open(modelFileName, "w",encoding="latin1") as modelFile:
-        if spamCount==0:
-            modelFile.write("0.00\n")
-        else:
-            modelFile.write(str((spamCount / (spamCount + hamCount))) + "\n")
-        if hamCount==0:
-            modelFile.write("0.00\n")
-        else:
-            modelFile.write(str((hamCount / (spamCount + hamCount))) + "\n")
-        modelFile.write(("SPAM")+"\n")
-        for key, value in spamDicts.items():
-            if len(key)!=0:
-                modelFile.write(key + " " + str(math.log10((value/spamWordsCount)))+"\n")
-        modelFile.write(("HAM")+"\n")
-        for key, value in hamDicts.items():
-            if len(key)!=0:
-                modelFile.write(key+ " " +str(math.log10(((value / hamWordsCount))))+"\n")
+            uniqueDict[key] = 0
+    if spamFileCount==0:
+        jsonData["spamFileCount"]=0.00
+    else:
+        jsonData["spamFileCount"] = (spamFileCount)
+    if hamFileCount==0:
+        jsonData["hamFileCount"] = 0.00
+    else:
+        jsonData["hamFileCount"] = (hamFileCount)
+    jsonData["SPAM"]= spamDicts
+    jsonData["HAM"] = hamDicts
+    jsonData["filesTotal"] = hamFileCount + spamFileCount
+    jsonData["spamWordTotal"]=spamWordsCount
+    jsonData["hamWordTotal"] = hamWordsCount
+    jsonData["uniqueWords"] = len(uniqueDict)
+    jsonString=json.dumps(jsonData,indent=4,sort_keys=True, ensure_ascii=False)
+    with open(modelFileName, "w", encoding="latin1") as modelFile:
+        modelFile.write(jsonString)
+
 
 def listFiles(directoryPath):
     for root, dirs, files in os.walk(directoryPath):
