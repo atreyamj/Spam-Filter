@@ -3,15 +3,7 @@ import sys
 import json
 spamDicts={}
 hamDicts={}
-EnglishStopWords = {'ourselves', 'hers', 'between', 'yourself', 'but', 'again', 'there', 'about', 'once', 'during', 'out',
-                    'very', 'having', 'with', 'they', 'own', 'an', 'be', 'some', 'for', 'do', 'its', 'yours', 'such', 'into',
-                    'of', 'most', 'itself', 'other', 'off', 'is', 's', 'am', 'or', 'who', 'as', 'from', 'him', 'each', 'the',
-                    'themselves', 'until', 'below', 'are', 'we', 'these', 'your', 'his', 'through', 'don', 'nor', 'me', 'were',
-                    'her', 'more', 'himself', 'this', 'down', 'should', 'our', 'their', 'while', 'above', 'both', 'up', 'to', 'ours',
-                    'had', 'she', 'all', 'no', 'when', 'at', 'any', 'before', 'them', 'same', 'and', 'been', 'have', 'in', 'will',
-                    'on', 'does', 'yourselves', 'then', 'that', 'because', 'what', 'over', 'why', 'so', 'can', 'did', 'not', 'now',
-                    'under', 'he', 'you', 'herself', 'has', 'just', 'where', 'too', 'only', 'myself', 'which', 'those', 'i', 'after',
-                    'few', 'whom', 't', 'being', 'if', 'theirs', 'my', 'against', 'a', 'by', 'doing', 'it', 'how', 'further', 'was', 'here', 'than'}
+
 spamFileCount=0
 hamFileCount=0
 def readSpamFile(fileName):
@@ -20,7 +12,7 @@ def readSpamFile(fileName):
         for line in f:
             for word in line.split(" "):
                 word=word.rstrip('\n').rstrip('\r')
-                if (word not in EnglishStopWords) and (word.isnumeric() is False):
+                if (word.isnumeric() is False):
                     if (word in spamDicts):
                         spamDicts[word]=spamDicts[word]+1
                     else:
@@ -33,7 +25,7 @@ def readHamFile(fileName):
         for line in f:
             for word in line.split(" "):
                 word=word.rstrip('\n').rstrip('\r')
-                if (word not in EnglishStopWords) and (word.isnumeric() is False):
+                if (word.isnumeric() is False):
                     if word in hamDicts:
                         hamDicts[word]=hamDicts[word]+1
                     else:
