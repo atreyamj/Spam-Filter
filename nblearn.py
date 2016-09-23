@@ -1,6 +1,7 @@
 import os
 import sys
 import json
+import statistics
 spamDicts={}
 hamDicts={}
 
@@ -10,26 +11,24 @@ def readSpamFile(fileName):
     global spamDicts,spamFileCount
     with open(fileName, 'r',encoding= "latin1") as f:
         for line in f:
-            for word in line.split(" "):
+            for word in line.split():
                 word=word.rstrip('\n').rstrip('\r')
-                if (word.isnumeric() is False):
-                    if (word in spamDicts):
-                        spamDicts[word]=spamDicts[word]+1
-                    else:
-                        spamDicts[word] = 1
+                if (word in spamDicts):
+                    spamDicts[word]=spamDicts[word]+1
+                else:
+                    spamDicts[word] = 1
     spamFileCount+=1
 
 def readHamFile(fileName):
     global hamDicts,hamFileCount
     with open(fileName, 'r',encoding= "latin1") as f:
         for line in f:
-            for word in line.split(" "):
+            for word in line.split():
                 word=word.rstrip('\n').rstrip('\r')
-                if (word.isnumeric() is False):
-                    if word in hamDicts:
-                        hamDicts[word]=hamDicts[word]+1
-                    else:
-                        hamDicts[word] = 1
+                if word in hamDicts:
+                    hamDicts[word]=hamDicts[word]+1
+                else:
+                    hamDicts[word] = 1
     hamFileCount+=1
 
 def generateModel(modelFileName):
@@ -60,6 +59,10 @@ def generateModel(modelFileName):
     jsonData["spamWordTotal"]=spamWordsCount
     jsonData["hamWordTotal"] = hamWordsCount
     jsonData["uniqueWords"] = len(uniqueDict)
+    jsonData["spamMean"]=statistics.mean(spamDicts.values())
+    jsonData["hamMean"] = statistics.mean(hamDicts.values())
+    jsonData["spamSD"] = statistics.pstdev(spamDicts.values())
+    jsonData["hamSD"] = statistics.pstdev(hamDicts.values())
     jsonString=json.dumps(jsonData,indent=4,sort_keys=True, ensure_ascii=False)
     with open(modelFileName, "w", encoding="latin1") as modelFile:
         modelFile.write(jsonString)
@@ -73,6 +76,7 @@ def listFiles(directoryPath):
                 readSpamFile(os.path.join(root,file))
             if os.path.basename(root) == "ham":
              readHamFile(os.path.join(root,file))
+
 
 if  len(sys.argv) != 2:
     print("Error: The input data path is NULL or empty\n")

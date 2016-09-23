@@ -7,7 +7,7 @@ spamDicts={}
 hamDicts={}
 spamProb=0.0
 hamProb=0.0
-
+##STASH
 def buildModel(modelName):
     global spamProb,hamProb
     global spamDicts,hamDicts,jsonModel
@@ -36,7 +36,11 @@ def getSpamProbability(spamProbability,fileContent):
         if wordCounts !=-1:
             spamCounts.append(wordCounts)
     for wordCounts in spamCounts:
-        spamProbab.append(math.log((wordCounts + 1) / (jsonModel["spamWordTotal"] + jsonModel["uniqueWords"])))
+        spamProbab.append(math.log((wordCounts + spamThreshold) / (jsonModel["spamWordTotal"] + jsonModel["uniqueWords"])))
+    spamWordCounts = [spamDicts[token] if token in spamDicts else 0 if token in hamDicts else -1 for token in tokens]
+    spamWordCounts = [wordCounts for wordCounts in spamWordCounts if wordCounts != -1]
+
+    spamProbab = [math.log((wordCounts + spamThreshold)/ (jsonModel["spamWordTotal"] + jsonModel["uniqueWords"])) for wordCounts in spamWordCounts]
     totalSpamProbab = sum(spamProbab) + spamProbability
     return totalSpamProbab
 
@@ -57,7 +61,7 @@ def getHamProbability(hamProbability,fileContent):
         if wordCounts != -1:
             hamCounts.append(wordCounts)
     for wordCounts in hamCounts:
-        hamProbab.append(math.log((wordCounts + 1) / (jsonModel["hamWordTotal"] + jsonModel["uniqueWords"])))
+        hamProbab.append(math.log((wordCounts + hamThreshold) / (jsonModel["hamWordTotal"] + jsonModel["uniqueWords"])))
     totalHamProbab = sum(hamProbab) + hamProbability
     return totalHamProbab
 
@@ -132,6 +136,8 @@ if  not sys.argv[1]:
     sys.exit(-1)
 
 buildModel("nbmodel.txt")
+spamThreshold=jsonModel["spamMean"] / jsonModel["spamSD"]
+hamThreshold=jsonModel["hamMean"] / jsonModel["hamSD"]
 getClassification(sys.argv[1])
 getPerformanceStatistics("nboutput.txt")
 sys.exit(0)
